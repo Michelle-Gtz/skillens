@@ -13,11 +13,23 @@ export const meta = () => {
 };
 
 interface Feedback {
+  overallScore: number;
+  toneAndStyle: {
+    score: number;
+  };
+  content: {
+    score: number;
+  };
+  structure: {
+    score: number;
+  };
+  skills: {
+    score: number;
+  };
   ATS?: {
     score: number;
     tips: { type: "good" | "improve"; tip: string }[];
   };
-  [key: string]: any;
 }
 
 export default function Resume() {
@@ -33,12 +45,13 @@ export default function Resume() {
     if (typeof window === "undefined") return;
 
     if (!isLoading && !auth.isAuthenticated) {
-      navigate(`/auth?next=/resume${id}`);
+      navigate(`/auth?next=/resume/${id}`);
     }
   }, [auth.isAuthenticated, isLoading, id, navigate]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // ✅ prevent SSR execution
+    if (typeof window === "undefined") return;
+    if (!id) return;
 
     const loadResume = async (): Promise<void> => {
       const resume: any = await kv.get(`resume-${id}`);
@@ -64,6 +77,7 @@ export default function Resume() {
 
     loadResume();
   }, [id, kv, fs]);
+
   return (
     <main className="pt-0">
       <nav className="resume-nav">
@@ -91,7 +105,7 @@ export default function Resume() {
         </section>
 
         <section className="feedback-section">
-          <h2 className="text-4xl text-black front-bold">Resume Review</h2>
+          <h2 className="text-4xl text-black font-bold">Resume Review</h2>
 
           {feedback ? (
             <div className="flex flex-col gap-8 animate-in fade-in duration-1000">

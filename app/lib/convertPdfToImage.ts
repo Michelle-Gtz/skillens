@@ -5,14 +5,11 @@ export interface PdfConversionResult {
 }
 
 let pdfjsLib: any = null;
-let isLoading = false;
 let loadPromise: Promise<any> | null = null;
 
 async function loadPdfJs(): Promise<any> {
   if (pdfjsLib) return pdfjsLib;
   if (loadPromise) return loadPromise;
-
-  isLoading = true;
 
   loadPromise = Promise.all([
     import("pdfjs-dist"),
@@ -23,12 +20,12 @@ async function loadPdfJs(): Promise<any> {
     lib.GlobalWorkerOptions.workerSrc = worker.default;
 
     pdfjsLib = lib;
-    isLoading = false;
     return lib;
   });
 
   return loadPromise;
 }
+
 export async function convertPdfToImage(
   file: File,
 ): Promise<PdfConversionResult> {

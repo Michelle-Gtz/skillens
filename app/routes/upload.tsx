@@ -6,10 +6,9 @@ import { useNavigate } from "react-router";
 import { usePuterStore } from "~/lib/puter";
 import { generateUUID } from "~/lib/utils";
 import { prepareInstructions } from "../../constants";
-import ky from "ky";
 
 export default function Upload() {
-  const { auth, isLoading, fs, ai, kv } = usePuterStore();
+  const { fs, ai, kv } = usePuterStore();
   const navigate = useNavigate();
   const [isProcessing, setisProcessing] = useState(false);
   const [statusText, setstatusText] = useState("");
@@ -35,15 +34,26 @@ export default function Upload() {
 
     const uploadedFile = await fs.upload([file]);
 
-    if (!uploadedFile) return setstatusText("Failed to upload file");
+    if (!uploadedFile) {
+      setisProcessing(false);
+      return setstatusText("Failed to upload file");
+    }
 
     setstatusText("Converting to image...");
     const imageFile = await convertPdfToImage(file);
-    if (!imageFile.file) return setstatusText("Failed to convert pdf to image");
+
+    if (!imageFile?.file) {
+      setisProcessing(false);
+      return setstatusText("Failed to convert pdf to image");
+    }
 
     setstatusText("Uploading image...");
     const uploadedImage = await fs.upload([imageFile.file]);
-    if (!uploadedImage) return setstatusText("Failed to upload image");
+
+    if (!uploadedImage) {
+      setisProcessing(false);
+      return setstatusText("Failed to upload image");
+    }
 
     setstatusText("Generating feedback...");
 
@@ -57,9 +67,8 @@ export default function Upload() {
       jobDescription,
       feedback: "",
     };
-    await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
-    setstatusText("Analyzing your resume...");
+    await kv.set(`resume-${uuid}`, JSON.stringify(data));
 
     const feedback = await ai.feedback(
       uploadedFile.path,
@@ -69,7 +78,11 @@ export default function Upload() {
         AIResponseFormat: "JSON",
       }),
     );
-    if (!feedback) return setstatusText("Failed to generate feedback");
+
+    if (!feedback) {
+      setisProcessing(false);
+      return setstatusText("Failed to generate feedback");
+    }
 
     const feedbackText =
       typeof feedback.message.content === "string"
@@ -77,8 +90,9 @@ export default function Upload() {
         : feedback.message.content[0].text;
 
     data.feedback = JSON.parse(feedbackText);
-    await kv.set(`resume:${uuid}`, JSON.stringify(data));
-    console.log(data);
+
+    await kv.set(`resume-${uuid}`, JSON.stringify(data));
+
     navigate(`/resume/${uuid}`);
   };
 
@@ -86,31 +100,18 @@ export default function Upload() {
     e.preventDefault();
 
     const form = e.currentTarget;
-    const formDaat = new FormData(form);
+    const formData = new FormData(form);
 
-    const companyName = formDaat.get("company-name") as string;
-    const jobTitle = formDaat.get("job-title") as string;
-    const jobDescription = formDaat.get("job-description") as string;
-
-    if (!file) return;
-
-    handleAanalyze({ companyName, jobTitle, jobDescription, file });
+    const companyName = formData.get("company-name") as string;
+    const jobTitle = formData.get("job-title") as string;
+    const jobDescription = formData.get("job-description") as string;
 
     if (!file) {
       setstatusText("Please upload your resume");
       return;
     }
 
-    setisProcessing(true);
-    setstatusText("Analyzing your resume...");
-
-    setTimeout(() => {
-      setstatusText("Optimizing feedback...");
-    }, 1500);
-
-    setTimeout(() => {
-      setisProcessing(false);
-    }, 3000);
+    handleAanalyze({ companyName, jobTitle, jobDescription, file });
   };
 
   return (
