@@ -13,10 +13,15 @@ async function loadPdfJs(): Promise<any> {
   if (loadPromise) return loadPromise;
 
   isLoading = true;
-  // @ts-expect-error - pdfjs-dist/build/pdf.mjs is not a module
-  loadPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
-    // Set the worker source to use local file
-    lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+  loadPromise = Promise.all([
+    import("pdfjs-dist"),
+    import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
+  ]).then(([pdfjs, worker]) => {
+    const lib = pdfjs.default || pdfjs;
+
+    lib.GlobalWorkerOptions.workerSrc = worker.default;
+
     pdfjsLib = lib;
     isLoading = false;
     return lib;
@@ -24,7 +29,6 @@ async function loadPdfJs(): Promise<any> {
 
   return loadPromise;
 }
-
 export async function convertPdfToImage(
   file: File,
 ): Promise<PdfConversionResult> {
@@ -39,21 +43,22 @@ export async function convertPdfToImage(
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
 
+    if (!context) {
+      throw new Error("Canvas context not available");
+    }
+
     canvas.width = viewport.width;
     canvas.height = viewport.height;
 
-    if (context) {
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-    }
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
 
-    await page.render({ canvasContext: context!, viewport }).promise;
+    await page.render({ canvasContext: context, viewport }).promise;
 
     return new Promise((resolve) => {
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            // Create a File from the blob with the same name as the pdf
             const originalName = file.name.replace(/\.pdf$/i, "");
             const imageFile = new File([blob], `${originalName}.png`, {
               type: "image/png",
@@ -73,7 +78,7 @@ export async function convertPdfToImage(
         },
         "image/png",
         1.0,
-      ); // Set quality to maximum (1.0)
+      );
     });
   } catch (err) {
     return {

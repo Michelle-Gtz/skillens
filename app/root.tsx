@@ -29,7 +29,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { init } = usePuterStore();
 
   useEffect(() => {
-    init();
+    const script = document.createElement("script");
+    script.src = "https://js.puter.com/v2/";
+    script.async = true;
+
+    script.onload = () => {
+      init(); // 👈 solo cuando Puter ya está listo
+    };
+
+    document.body.appendChild(script);
   }, [init]);
 
   return (
@@ -41,7 +49,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <script src="https://js.puter.com/v2/"></script>
         {children}
         <ScrollRestoration />
         <Scripts />

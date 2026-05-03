@@ -5,6 +5,8 @@ import { convertPdfToImage } from "~/lib/convertPdfToImage";
 import { useNavigate } from "react-router";
 import { usePuterStore } from "~/lib/puter";
 import { generateUUID } from "~/lib/utils";
+import { prepareInstructions } from "../../constants";
+import ky from "ky";
 
 export default function Upload() {
   const { auth, isLoading, fs, ai, kv } = usePuterStore();
@@ -61,8 +63,23 @@ export default function Upload() {
 
     const feedback = await ai.feedback(
       uploadedFile.path,
-      "You are an expert in ATS (applicant tracking system) and resume analysis...,",
+      prepareInstructions({
+        jobTitle,
+        jobDescription,
+        AIResponseFormat: "JSON",
+      }),
     );
+    if (!feedback) return setstatusText("Failed to generate feedback");
+
+    const feedbackText =
+      typeof feedback.message.content === "string"
+        ? feedback.message.content
+        : feedback.message.content[0].text;
+
+    data.feedback = JSON.parse(feedbackText);
+    await kv.set(`resume:${uuid}`, JSON.stringify(data));
+    console.log(data);
+    navigate(`/resume/${uuid}`);
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
