@@ -84,12 +84,26 @@ export default function Upload() {
       return setstatusText("Failed to generate feedback");
     }
 
+    console.debug("AI raw response:", feedback);
+
     const feedbackText =
       typeof feedback.message.content === "string"
         ? feedback.message.content
-        : feedback.message.content[0].text;
+        : (feedback.message.content[0]?.text ?? "");
 
-    data.feedback = JSON.parse(feedbackText);
+    console.debug("AI feedback text:", feedbackText);
+
+    let parsedFeedback: any = null;
+    try {
+      parsedFeedback = JSON.parse(feedbackText);
+    } catch (err) {
+      console.error("Failed to parse AI feedback JSON:", err, feedbackText);
+      setisProcessing(false);
+      setstatusText("Failed to parse AI feedback (check console)");
+      return;
+    }
+
+    data.feedback = parsedFeedback;
 
     await kv.set(`resume-${uuid}`, JSON.stringify(data));
 

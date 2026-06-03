@@ -58,6 +58,7 @@ export default function Resume() {
       if (!resume) return;
 
       const data = JSON.parse(resume);
+      console.debug("Loaded resume data:", data);
 
       const resumeBlob = await fs.read(data.resumePath);
       if (!resumeBlob) return;
@@ -105,7 +106,7 @@ export default function Resume() {
         </section>
 
         <section className="feedback-section">
-          <h2 className="text-4xl text-black font-bold">Resume Review</h2>
+          <h2 className="text-4xl font-bold">Resume Review</h2>
 
           {feedback ? (
             <div className="flex flex-col gap-8 animate-in fade-in duration-1000">
@@ -117,6 +118,14 @@ export default function Resume() {
               />
 
               <Details feedback={feedback} />
+
+              {/* Debug: raw feedback object */}
+              <div className="bg-surface p-4 rounded-lg text-sm">
+                <h4 className="font-semibold mb-2">Debug: raw feedback JSON</h4>
+                <pre className="whitespace-pre-wrap max-h-60 overflow-auto">
+                  {JSON.stringify(feedback, null, 2)}
+                </pre>
+              </div>
             </div>
           ) : (
             <img src="/images/resume-scan-2.gif" className="w-full" />

@@ -1,21 +1,37 @@
 import React from "react";
+import ScoreBadge from "./ScoreBadge";
 import ScoreGauge from "./ScoreGauge";
 
 interface Props {
-  feedback: any; // ✅ allow dynamic shape (prevents TS mismatch issues)
+  feedback: any;
 }
 
 const Category = ({ title, score }: { title: string; score: number }) => {
+  const textColor =
+    score > 70
+      ? "text-[var(--color-badge-green-text)]"
+      : score > 49
+        ? "text-[var(--color-badge-yellow-text)]"
+        : "text-[var(--color-badge-red-text)]";
+
   return (
     <div className="resume-summary">
-      {title} - {score}
+      <div className="category">
+        <div className="flex flex-col gap-2 items-start justify-center">
+          <p className="text-2xl">{title}</p>
+          <ScoreBadge score={score} />
+        </div>
+      </div>
+      <p className="text-2xl">
+        <span className={textColor}>{score}%</span>
+      </p>
     </div>
   );
 };
 
 export default function Summary({ feedback }: Props) {
   return (
-    <div className="bg-white rounded-2xl shadow-md w-full">
+    <div className="resume-card w-full">
       <div className="flex flex-row items-center p-4 gap-8">
         <ScoreGauge score={feedback?.overallScore ?? 0} />
 

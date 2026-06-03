@@ -1,12 +1,10 @@
 import Navbar from "~/components/Navbar";
-import type { Route } from "./+types/home";
 import ResumeCard from "~/components/ResumeCard";
-import { resumes } from "../../constants";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { usePuterStore } from "~/lib/puter";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Skillens" },
     { name: "description", content: "Smart Feedback for CVs" },
@@ -14,12 +12,52 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const { auth } = usePuterStore();
+  const { auth, kv } = usePuterStore();
   const navigate = useNavigate();
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loadingResumes, setLoadingResumes] = useState(false);
 
   useEffect(() => {
-    if (!auth.isAuthenticated) navigate("/auth?next=/");
-  }, [auth.isAuthenticated]);
+    if (!auth.isAuthenticated) {
+      navigate("/auth?next=/");
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadResumes = async () => {
+      setLoadingResumes(true);
+
+      try {
+        const items = await kv.list("resume:*", true);
+        const parsedResumes = (items as any[])
+          ?.map((item) => {
+            try {
+              return typeof item?.value === "string"
+                ? (JSON.parse(item.value) as Resume)
+                : null;
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean) as Resume[];
+
+        if (isMounted) {
+          setResumes(parsedResumes || []);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingResumes(false);
+        }
+      }
+    };
+
+    loadResumes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [auth.isAuthenticated, kv, navigate]);
 
   return (
     <main>
@@ -30,15 +68,35 @@ export default function Home() {
           <h1 className="text-gradient">
             Track your Applications and Resume Rating
           </h1>
-
-          <h2>Review your submissions and check AI powered feedback</h2>
+          {!loadingResumes && resumes.length === 0 ? (
+            <h2>No resumes found, UPLOAD your resume to get feedback</h2>
+          ) : (
+            <h2>Review your submissions and check AI powered feedback</h2>
+          )}
         </div>
+        {loadingResumes && (
+          <div className="flex flex-col items-center justify-center gap-4">
+            <img
+              src="/images/resume-san-2.gif"
+              alt="Loading resumes"
+              className="w-[200px]"
+            />
+          </div>
+        )}
 
-        {resumes.length > 0 && (
+        {!loadingResumes && resumes.length > 0 && (
           <div className="resumes-section">
             {resumes.map((resume) => (
               <ResumeCard key={resume.id} resume={resume} />
             ))}
+          </div>
+        )}
+
+        {!loadingResumes && resumes.length === 0 && (
+          <div className="flex flex-col items-center justify-center mt-8 gap-4">
+            <Link to="/upload" className="primary-button w-fit">
+              Upload your resume
+            </Link>
           </div>
         )}
       </section>
