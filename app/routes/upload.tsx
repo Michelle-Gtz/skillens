@@ -5,7 +5,7 @@ import { convertPdfToImage } from "~/lib/convertPdfToImage";
 import { useNavigate } from "react-router";
 import { usePuterStore } from "~/lib/puter";
 import { generateUUID, normalizeFeedback } from "~/lib/utils";
-import { prepareInstructions } from "../../constants";
+import { AIResponseFormat, prepareInstructions } from "../../constants";
 
 export default function Upload() {
   const { fs, ai, kv } = usePuterStore();
@@ -73,11 +73,11 @@ export default function Upload() {
     let feedback;
     try {
       feedback = await ai.feedback(
-        uploadedFile.path,
+        uploadedImage.path,
         prepareInstructions({
           jobTitle,
           jobDescription,
-          AIResponseFormat: "JSON",
+          AIResponseFormat,
         }),
       );
     } catch (error) {

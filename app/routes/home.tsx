@@ -29,7 +29,7 @@ export default function Home() {
       setLoadingResumes(true);
 
       try {
-        const items = await kv.list("resume:*", true);
+        const items = await kv.list("resume-", true);
         const parsedResumes = (items as any[])
           ?.map((item) => {
             try {

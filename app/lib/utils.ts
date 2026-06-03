@@ -41,36 +41,71 @@ const normalizeTips = (tips: unknown) => {
     .filter((tip) => tip.tip.length > 0);
 };
 
-export function normalizeFeedback(raw: unknown) {
-  let payload = raw;
-
-  if (typeof payload === "string") {
-    const cleaned = payload
+const tryParseJson = (value: unknown): unknown => {
+  if (typeof value === "string") {
+    const cleaned = value
       .replace(/```json/gi, "")
       .replace(/```/g, "")
       .trim();
 
-    const jsonStart = cleaned.indexOf("{");
-    const jsonEnd = cleaned.lastIndexOf("}");
-
-    payload =
-      jsonStart >= 0 && jsonEnd > jsonStart
-        ? cleaned.slice(jsonStart, jsonEnd + 1)
-        : cleaned;
-  }
-
-  if (typeof payload === "string") {
     try {
-      payload = JSON.parse(payload);
+      return JSON.parse(cleaned);
     } catch {
+      const jsonStart = cleaned.indexOf("{");
+      const jsonEnd = cleaned.lastIndexOf("}");
+      if (jsonStart >= 0 && jsonEnd > jsonStart) {
+        try {
+          return JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
+        } catch {
+          return null;
+        }
+      }
       return null;
     }
   }
 
-  if (!payload || typeof payload !== "object") return null;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const parsed = tryParseJson(item);
+      if (parsed && typeof parsed === "object") return parsed;
+    }
+  }
 
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+
+    if (typeof record.content !== "undefined") {
+      const parsed = tryParseJson(record.content);
+      if (parsed) return parsed;
+    }
+
+    if (typeof record.message !== "undefined") {
+      const parsed = tryParseJson(record.message);
+      if (parsed) return parsed;
+    }
+
+    if (Array.isArray(record.choices)) {
+      const parsed = tryParseJson(record.choices);
+      if (parsed) return parsed;
+    }
+
+    if (typeof record.feedback !== "undefined") {
+      const parsed = tryParseJson(record.feedback);
+      if (parsed) return parsed;
+    }
+  }
+
+  return null;
+};
+
+export function normalizeFeedback(raw: unknown) {
+  const parsed = tryParseJson(raw);
+
+  if (!parsed || typeof parsed !== "object") return null;
+
+  const payload = parsed as Record<string, unknown>;
   const candidate =
-    "feedback" in payload && typeof payload.feedback === "object"
+    typeof payload.feedback === "object" && payload.feedback !== null
       ? (payload.feedback as Record<string, any>)
       : (payload as Record<string, any>);
 
