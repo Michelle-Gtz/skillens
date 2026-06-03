@@ -4,6 +4,7 @@ import Ats from "~/components/Ats";
 import Details from "~/components/Details";
 import Summary from "~/components/Summary";
 import { usePuterStore } from "~/lib/puter";
+import { normalizeFeedback } from "~/lib/utils";
 
 export const meta = () => {
   return [
@@ -58,22 +59,38 @@ export default function Resume() {
       if (!resume) return;
 
       const data = JSON.parse(resume);
-      console.debug("Loaded resume data:", data);
+      const normalizedFeedback = normalizeFeedback(data.feedback ?? data);
+      console.debug(
+        "Loaded resume data:",
+        data,
+        "Normalized feedback:",
+        normalizedFeedback,
+      );
 
-      const resumeBlob = await fs.read(data.resumePath);
+      let resumeBlob;
+      try {
+        resumeBlob = await fs.read(data.resumePath);
+      } catch {
+        resumeBlob = null;
+      }
       if (!resumeBlob) return;
 
       const pdfBlob = new Blob([resumeBlob], { type: "application/pdf" });
       const resumeURL = URL.createObjectURL(pdfBlob);
       setResumeUrl(resumeURL);
 
-      const imageBlob = await fs.read(data.imagePath);
+      let imageBlob;
+      try {
+        imageBlob = await fs.read(data.imagePath);
+      } catch {
+        imageBlob = null;
+      }
       if (!imageBlob) return;
 
       const image = URL.createObjectURL(imageBlob);
       setImageUrl(image);
 
-      setFeedback(data.feedback);
+      setFeedback(normalizedFeedback ?? data.feedback ?? null);
     };
 
     loadResume();
@@ -91,7 +108,7 @@ export default function Resume() {
       </nav>
 
       <div className="flex flex-row w-full max-lg:flex-col-reverse">
-        <section className="feedback-section bg-[url('/images/bg-small.svg')] bg-cover h-[100vh] sticky top-0 items-center justify-center">
+        <section className="feedback-section h-[100vh] sticky top-0 items-center justify-center bg-[radial-gradient(circle_at_top_right,rgba(124,140,255,0.14),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(244,114,182,0.12),transparent_25%),linear-gradient(180deg,#0b0f19_0%,#111827_100%)]">
           {imageUrl && resumeUrl && (
             <div className="animate-in fade-in duration-1000 gradient-border max-sm:m-0 h-[98%] max-wxl:h-fit w-fit">
               <a href={resumeUrl} target="_blank">

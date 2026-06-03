@@ -16,11 +16,17 @@ export default function ResumeCard({
     let objectUrl = "";
 
     const loadResumeImage = async () => {
-      const blob = await fs.read(imagePath);
-      if (!blob || !isMounted) return;
+      try {
+        const blob = await fs.read(imagePath);
+        if (!blob || !isMounted) return;
 
-      objectUrl = URL.createObjectURL(blob);
-      setResumeUrl(objectUrl);
+        objectUrl = URL.createObjectURL(blob);
+        setResumeUrl(objectUrl);
+      } catch {
+        if (isMounted) {
+          setResumeUrl("/images/pdf.png");
+        }
+      }
     };
 
     loadResumeImage();
@@ -60,7 +66,7 @@ export default function ResumeCard({
       <div className="gradient-border animate-in fade-in duration-1000">
         <div className="w-full h-full">
           <img
-            src={resumeUrl}
+            src={resumeUrl || "/images/pdf.png"}
             alt="Resume"
             className="w-full h-[260px] max-sm:h-[200px] object-cover object-top"
           />

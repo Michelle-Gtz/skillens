@@ -4,7 +4,7 @@ import FileUploader from "~/components/FileUploader";
 import { convertPdfToImage } from "~/lib/convertPdfToImage";
 import { useNavigate } from "react-router";
 import { usePuterStore } from "~/lib/puter";
-import { generateUUID } from "~/lib/utils";
+import { generateUUID, normalizeFeedback } from "~/lib/utils";
 import { prepareInstructions } from "../../constants";
 
 export default function Upload() {
@@ -58,7 +58,7 @@ export default function Upload() {
     setstatusText("Generating feedback...");
 
     const uuid = generateUUID();
-    const data = {
+    const data: { [key: string]: any } = {
       id: uuid,
       resumePath: uploadedFile.path,
       imagePath: uploadedImage.path,
@@ -70,14 +70,21 @@ export default function Upload() {
 
     await kv.set(`resume-${uuid}`, JSON.stringify(data));
 
-    const feedback = await ai.feedback(
-      uploadedFile.path,
-      prepareInstructions({
-        jobTitle,
-        jobDescription,
-        AIResponseFormat: "JSON",
-      }),
-    );
+    let feedback;
+    try {
+      feedback = await ai.feedback(
+        uploadedFile.path,
+        prepareInstructions({
+          jobTitle,
+          jobDescription,
+          AIResponseFormat: "JSON",
+        }),
+      );
+    } catch (error) {
+      console.error("AI feedback generation failed:", error);
+      setisProcessing(false);
+      return setstatusText("Failed to generate feedback. Please try again.");
+    }
 
     if (!feedback) {
       setisProcessing(false);
@@ -86,18 +93,20 @@ export default function Upload() {
 
     console.debug("AI raw response:", feedback);
 
+    const content = feedback?.message?.content;
     const feedbackText =
-      typeof feedback.message.content === "string"
-        ? feedback.message.content
-        : (feedback.message.content[0]?.text ?? "");
+      typeof content === "string"
+        ? content
+        : Array.isArray(content)
+          ? (content[0]?.text ?? "")
+          : "";
 
     console.debug("AI feedback text:", feedbackText);
 
-    let parsedFeedback: any = null;
-    try {
-      parsedFeedback = JSON.parse(feedbackText);
-    } catch (err) {
-      console.error("Failed to parse AI feedback JSON:", err, feedbackText);
+    const parsedFeedback = normalizeFeedback(feedbackText);
+
+    if (!parsedFeedback) {
+      console.error("Failed to parse AI feedback JSON:", feedbackText);
       setisProcessing(false);
       setstatusText("Failed to parse AI feedback (check console)");
       return;
