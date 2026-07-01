@@ -20,14 +20,14 @@ export default function Ats({ score, suggestions }: Props) {
 
   return (
     <div
-      className={`rounded-2xl border bg-gradient-to-r ${toneClass} p-4 shadow-[0_18px_40px_rgba(15,23,42,0.35)]`}
+      className={`rounded-2xl border border-white/10 bg-gradient-to-r ${toneClass} p-5 shadow-[0_18px_40px_rgba(15,23,42,0.35)]`}
     >
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">ATS Score</h3>
-        <div className="text-2xl font-bold">{score}%</div>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-white">ATS Score</h3>
+        <div className="text-xl font-semibold text-white">{score}%</div>
       </div>
 
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-4 space-y-2.5">
         {suggestions.map((s, idx) => (
           <li key={idx} className="flex gap-3 items-start">
             <span
@@ -38,7 +38,8 @@ export default function Ats({ score, suggestions }: Props) {
             />
             <p
               className={
-                s.type === "good" ? "text-emerald-100" : "text-rose-100"
+                "text-sm leading-6 " +
+                (s.type === "good" ? "text-emerald-100" : "text-rose-100")
               }
             >
               {s.tip}

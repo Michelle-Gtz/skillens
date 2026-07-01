@@ -17,27 +17,32 @@ const Category = ({ title, score }: { title: string; score: number }) => {
   return (
     <div className="resume-summary">
       <div className="category">
-        <div className="flex flex-col gap-2 items-start justify-center">
-          <p className="text-2xl">{title}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-gray-100">{title}</p>
           <ScoreBadge score={score} />
         </div>
+        <p className="text-sm font-semibold">
+          <span className={textColor}>{score}%</span>
+        </p>
       </div>
-      <p className="text-2xl">
-        <span className={textColor}>{score}%</span>
-      </p>
     </div>
   );
 };
 
 export default function Summary({ feedback }: Props) {
   return (
-    <div className="resume-card w-full">
-      <div className="flex flex-row items-center p-4 gap-8">
+    <div className="resume-card w-full max-w-none p-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
         <ScoreGauge score={feedback?.overallScore ?? 0} />
 
-        <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold">Your Resume Score</h2>
-          <p>This score is calculated based on the variables listed below.</p>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-semibold text-white">
+            Your Resume Score
+          </h2>
+          <p className="text-sm text-gray-300">
+            This score is calculated from the main ATS and content signals
+            below.
+          </p>
         </div>
       </div>
 

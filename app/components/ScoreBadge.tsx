@@ -24,7 +24,10 @@ const ScoreBadge: React.FC<ScoreBadgeProps> = ({ score }) => {
       className="score-badge inline-flex items-center px-3 py-1"
       style={{ background: bgVar }}
     >
-      <p className="text-sm font-medium" style={{ color: textVar }}>
+      <p
+        className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+        style={{ color: textVar }}
+      >
         {label}
       </p>
     </div>

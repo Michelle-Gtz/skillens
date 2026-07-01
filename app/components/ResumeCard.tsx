@@ -40,21 +40,21 @@ export default function ResumeCard({
   return (
     <Link
       to={`/resume/${id}`}
-      className="resume-card animate-in fade-in duration-1000"
+      className="resume-card animate-in fade-in duration-1000 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/6"
     >
       <div className="resume-card-header">
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           {companyName ? (
-            <h2 className="font-bold break-words">
+            <h2 className="text-base font-semibold break-words text-white">
               <span>{companyName}</span>
             </h2>
           ) : (
-            <h2 className="font-bold break-words">
+            <h2 className="text-base font-semibold break-words text-white">
               <span>Resume</span>
             </h2>
           )}
           {jobTitle && (
-            <h3 className="text-sm break-words text-gray-500">{jobTitle}</h3>
+            <h3 className="text-xs break-words text-gray-400">{jobTitle}</h3>
           )}
         </div>
 
@@ -63,12 +63,12 @@ export default function ResumeCard({
         </div>
       </div>
 
-      <div className="gradient-border animate-in fade-in duration-1000">
-        <div className="w-full h-full">
+      <div className="gradient-border animate-in fade-in duration-1000 p-2">
+        <div className="w-full h-full overflow-hidden rounded-xl">
           <img
             src={resumeUrl || "/images/pdf.png"}
             alt="Resume"
-            className="w-full h-[260px] max-sm:h-[200px] object-cover object-top"
+            className="w-full h-[220px] max-sm:h-[180px] object-cover object-top"
           />
         </div>
       </div>
