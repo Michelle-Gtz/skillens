@@ -43,7 +43,12 @@ export default function Home() {
           .filter(Boolean) as Resume[];
 
         if (isMounted) {
-          setResumes(parsedResumes || []);
+          const sorted = (parsedResumes || []).sort((a, b) => {
+            const aTime = a.createdAt ?? 0;
+            const bTime = b.createdAt ?? 0;
+            return bTime - aTime;
+          });
+          setResumes(sorted);
         }
       } finally {
         if (isMounted) {

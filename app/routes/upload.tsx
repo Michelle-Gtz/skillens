@@ -66,6 +66,7 @@ export default function Upload() {
       jobTitle,
       jobDescription,
       feedback: "",
+      createdAt: Date.now(),
     };
 
     await kv.set(`resume-${uuid}`, JSON.stringify(data));
